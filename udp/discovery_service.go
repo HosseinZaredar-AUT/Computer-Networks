@@ -1,7 +1,6 @@
 package udp
 
 import (
-	"fmt"
 	"net"
 	"time"
 )
@@ -41,13 +40,14 @@ func DiscoverService(clusterMap map[string]string, myAddress string) {
 			conn, err := net.DialUDP("udp", nil, udpAddr)
 			checkError(err)
 
-			_, err = conn.Write([]byte(flatList))
+			_, err = conn.Write([]byte("dis:" + flatList))
 			checkError(err)
 
-			fmt.Println("Sent the cluster list")
+			// fmt.Println("Sent the cluster list")
 		}
 
 		// have some rest!
 		time.Sleep(4 * time.Second)
+
 	}
 }

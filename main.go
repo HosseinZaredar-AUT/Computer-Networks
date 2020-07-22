@@ -17,9 +17,9 @@ func checkError(err error) {
 	}
 }
 
-// this function reads the cluster list file, updates clusterList slice
+// this function reads the cluster list file, updates clusterMap slice
 // and returns the address of the machine
-func readClusterList(clusterList *[][2]string, listPath string) string {
+func readclusterMap(clusterMap map[string]string, listPath string) string {
 	f, err := os.Open(listPath)
 	checkError(err)
 
@@ -33,19 +33,19 @@ func readClusterList(clusterList *[][2]string, listPath string) string {
 	// getting own address from the first line
 	s.Scan()
 	fields := strings.Fields(s.Text())
-	address := fields[1]
-	*clusterList = append(*clusterList, [2]string{fields[0], fields[1]})
+	myAddress := fields[1]
+	clusterMap[fields[0]] = fields[1]
 
 	// getting other nodes
 	for s.Scan() {
 		fields := strings.Fields(s.Text())
-		*clusterList = append(*clusterList, [2]string{fields[0], fields[1]})
+		clusterMap[fields[0]] = fields[1]
 	}
 
 	err = s.Err()
 	checkError(err)
 
-	return address
+	return myAddress
 }
 
 func main() {
@@ -55,16 +55,16 @@ func main() {
 	// dirPath := flag.String("d", "", "directory path")
 	flag.Parse()
 
-	// read cluster list from file
-	clusterList := make([][2]string, 0, 10)
-	address := readClusterList(&clusterList, *listPath)
-	fmt.Println("initial cluster list:", clusterList)
+	// read cluster map from file
+	clusterMap := make(map[string]string) // a map from name to IP address
+	myAddress := readclusterMap(clusterMap, *listPath)
+	fmt.Println("initial cluster map:", clusterMap)
 
 	// run udp server
-	go udp.Server(&clusterList, address)
+	go udp.Server(clusterMap, myAddress)
 
 	// run discover client
-	go udp.DiscoverClient(&clusterList)
+	go udp.DiscoverService(clusterMap, myAddress)
 
 	// waiting for goroutines
 	var wg sync.WaitGroup

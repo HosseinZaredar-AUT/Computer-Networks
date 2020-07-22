@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"time"
+	"strings"
 )
 
 func checkError(err error) {
@@ -14,15 +14,10 @@ func checkError(err error) {
 	}
 }
 
-func handleClient(conn *net.UDPConn, clientAddr *net.UDPAddr, in [512]byte) {
-	fmt.Printf("got '%s' from %s\n", string(in[:]), clientAddr)
-	time.Sleep(3 * time.Second)
-	conn.WriteToUDP([]byte("This is a UDP message!"), clientAddr)
-}
-
 //Server ...
-func Server(clusterList *[][2]string, address string) {
-	udpAddr, err := net.ResolveUDPAddr("udp4", address)
+func Server(clusterMap map[string]string, myAddress string) {
+
+	udpAddr, err := net.ResolveUDPAddr("udp4", myAddress)
 	checkError(err)
 
 	conn, err := net.ListenUDP("udp", udpAddr)
@@ -33,10 +28,20 @@ func Server(clusterList *[][2]string, address string) {
 	var buffer [512]byte
 
 	for {
-		_, clientAddr, err := conn.ReadFromUDP(buffer[:])
+		_, _, err := conn.ReadFromUDP(buffer[:])
 		if err != nil {
 			continue
 		}
-		go handleClient(conn, clientAddr, buffer)
+
+		// updating cluster map
+		message := string(buffer[:])
+		nodes := strings.Split(message, ",")
+		for _, node := range nodes {
+			fields := strings.Fields(node)
+			clusterMap[fields[0]] = fields[1]
+		}
+
+		fmt.Println("cluster map:", clusterMap)
+
 	}
 }

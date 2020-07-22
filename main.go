@@ -30,9 +30,11 @@ func readClusterList(clusterList *[][2]string, listPath string) string {
 
 	s := bufio.NewScanner(f)
 
-	// getting clients own address from the first line
+	// getting own address from the first line
 	s.Scan()
-	address := strings.Fields(s.Text())[1]
+	fields := strings.Fields(s.Text())
+	address := fields[1]
+	*clusterList = append(*clusterList, [2]string{fields[0], fields[1]})
 
 	// getting other nodes
 	for s.Scan() {
@@ -60,6 +62,9 @@ func main() {
 
 	// run udp server
 	go udp.Server(&clusterList, address)
+
+	// run discover client
+	go udp.DiscoverClient(&clusterList)
 
 	// waiting for goroutines
 	var wg sync.WaitGroup

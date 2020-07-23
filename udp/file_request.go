@@ -15,7 +15,7 @@ func FileRequest(fileName string, clusterMap map[string]string, myNode common.No
 		// TODO check if you a different file but with the same name
 
 		// no sending message to myself
-		if addr == myNode.Address {
+		if addr == (myNode.IP + ":" + myNode.UDPPPort) {
 			continue
 		}
 

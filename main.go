@@ -3,12 +3,16 @@ package main
 import (
 	"P2P-File-Sharing/cli"
 	"P2P-File-Sharing/common"
+	"P2P-File-Sharing/tcp"
 	"P2P-File-Sharing/udp"
 	"bufio"
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+
+	"github.com/phayes/freeport"
 )
 
 func checkError(err error) {
@@ -31,11 +35,14 @@ func readClusterNodes(clusterMap map[string]string, listPath string, myNode *com
 
 	s := bufio.NewScanner(f)
 
-	// getting my own address from the first line
+	// getting my own node information from the first line
 	s.Scan()
 	fields := strings.Fields(s.Text())
 	myNode.Name = fields[0]
-	myNode.Address = fields[1]
+	address := strings.Split(fields[1], ":")
+	myNode.IP = address[0]
+	myNode.UDPPPort = address[1]
+
 	clusterMap[fields[0]] = fields[1]
 
 	// getting other nodes
@@ -70,8 +77,15 @@ func main() {
 	// run discover client
 	go udp.DiscoverService(clusterMap, myNode)
 
+	// find a free TCP port
+	port, err := freeport.GetFreePort()
+	myNode.TCPPort = strconv.Itoa(port)
+	checkError(err)
+
+	// run TCP server
+	go tcp.Server(myNode)
+
 	// run CLI in the main goroutine
-	fmt.Println(clusterMap)
 	cli.RunCLI(clusterMap)
 
 	// go func() {

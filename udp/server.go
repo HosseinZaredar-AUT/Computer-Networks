@@ -41,7 +41,7 @@ func handleFileRequest(fileName string, dir string, myNode common.Node, conn *ne
 	for _, file := range files {
 		if !file.IsDir() && file.Name() == fileName[0:len(file.Name())] { //TODO: improve this
 			// send message to client
-			conn.WriteToUDP([]byte(myNode.Address+": I have '"+fileName+"'"), clientAddr)
+			conn.WriteToUDP([]byte("I have '"+fileName+"'"), clientAddr)
 			break
 		}
 	}
@@ -50,7 +50,8 @@ func handleFileRequest(fileName string, dir string, myNode common.Node, conn *ne
 //Server ...
 func Server(clusterMap map[string]string, myNode common.Node, dir string) {
 
-	udpAddr, err := net.ResolveUDPAddr("udp4", myNode.Address)
+	service := myNode.IP + ":" + myNode.UDPPPort
+	udpAddr, err := net.ResolveUDPAddr("udp4", service)
 	checkError(err)
 
 	conn, err := net.ListenUDP("udp", udpAddr)

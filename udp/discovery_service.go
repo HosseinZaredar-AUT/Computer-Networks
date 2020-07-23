@@ -31,7 +31,7 @@ func DiscoverService(clusterMap map[string]string, myNode common.Node) {
 		for _, addr := range clusterMap {
 
 			// no sending discovery message to myself
-			if addr == myNode.Address {
+			if addr == (myNode.IP + ":" + myNode.UDPPPort) {
 				continue
 			}
 

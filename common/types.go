@@ -2,6 +2,8 @@ package common
 
 // Node ...
 type Node struct {
-	Name    string
-	Address string
+	Name     string
+	IP       string
+	UDPPPort string
+	TCPPort  string
 }

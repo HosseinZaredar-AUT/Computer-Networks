@@ -18,8 +18,9 @@ func RunCLI(clusterMap map[string]string) {
 		switch state {
 		case 0: // main menu
 			fmt.Println("")
-			fmt.Println("1. See cluster list.")
-			fmt.Println("2. Get a file.")
+			fmt.Println("1. See cluster list")
+			fmt.Println("2. Get a file")
+			fmt.Println("2. Status")
 			fmt.Printf("Please choose a command: ")
 
 			command, _ := reader.ReadString('\n')
@@ -28,12 +29,20 @@ func RunCLI(clusterMap map[string]string) {
 				state = 1
 			} else if command == "2" {
 				state = 2
+			} else if command == "3" {
+				state = 3
 			}
 
 		case 1: // list of nodes
 			fmt.Println("Cluster List:")
 			fmt.Println(clusterMap)
 			state = 0
+
+		case 2: // get file
+			state = 0
+
+		case 3: // status
+
 		}
 
 		fmt.Println()

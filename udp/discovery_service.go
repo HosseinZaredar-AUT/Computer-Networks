@@ -21,7 +21,7 @@ func flattenList(clusterMap map[string]string) string {
 }
 
 //DiscoverService ...
-func DiscoverService(clusterMap map[string]string, myNode *common.Node) {
+func DiscoverService(clusterMap map[string]string, myNode common.Node) {
 	for {
 
 		// turn cluster map into an string

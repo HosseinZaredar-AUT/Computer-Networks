@@ -1,6 +1,7 @@
 package main
 
 import (
+	"P2P-File-Sharing/cli"
 	"P2P-File-Sharing/common"
 	"P2P-File-Sharing/udp"
 	"bufio"
@@ -8,8 +9,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
-	"time"
 )
 
 func checkError(err error) {
@@ -62,25 +61,24 @@ func main() {
 	var myNode common.Node
 
 	readClusterNodes(clusterMap, *listPath, &myNode)
-	fmt.Println("my node: ", myNode)
-	fmt.Println("initial cluster map:", clusterMap)
+	// fmt.Println("my node: ", myNode)
+	// fmt.Println("initial cluster map:", clusterMap)
 
 	// run udp server
-	go udp.Server(clusterMap, &myNode, *dir)
+	go udp.Server(clusterMap, myNode, *dir)
 
 	// run discover client
-	go udp.DiscoverService(clusterMap, &myNode)
+	go udp.DiscoverService(clusterMap, myNode)
 
-	go func() {
-		for {
-			fmt.Println("sent file request!")
-			udp.FileRequest("a.txt", clusterMap, &myNode)
-			time.Sleep(2 * time.Second)
-		}
-	}()
+	// run CLI in the main goroutine
+	fmt.Println(clusterMap)
+	cli.RunCLI(clusterMap)
 
-	// waiting for goroutines
-	var wg sync.WaitGroup
-	wg.Add(1)
-	wg.Wait()
+	// go func() {
+	// 	for {
+	// 		fmt.Println("sent file request!")
+	// 		udp.FileRequest("a.txt", clusterMap, myNode)
+	// 		time.Sleep(2 * time.Second)
+	// 	}
+	// }()
 }

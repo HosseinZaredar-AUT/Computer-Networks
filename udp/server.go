@@ -26,7 +26,7 @@ func handleDiscovery(message string, clusterMap map[string]string) {
 	// fmt.Println("cluster map:", clusterMap)
 }
 
-func handleFileRequest(fileName string, dir string, myNode *common.Node, conn *net.UDPConn, clientAddr *net.UDPAddr) {
+func handleFileRequest(fileName string, dir string, myNode common.Node, conn *net.UDPConn, clientAddr *net.UDPAddr) {
 
 	fmt.Println("got a file request!")
 	f, err := os.Open(dir)
@@ -48,7 +48,7 @@ func handleFileRequest(fileName string, dir string, myNode *common.Node, conn *n
 }
 
 //Server ...
-func Server(clusterMap map[string]string, myNode *common.Node, dir string) {
+func Server(clusterMap map[string]string, myNode common.Node, dir string) {
 
 	udpAddr, err := net.ResolveUDPAddr("udp4", myNode.Address)
 	checkError(err)
@@ -56,7 +56,7 @@ func Server(clusterMap map[string]string, myNode *common.Node, dir string) {
 	conn, err := net.ListenUDP("udp", udpAddr)
 	checkError(err)
 
-	fmt.Println("UDP server listining on", udpAddr)
+	// fmt.Println("UDP server listining on", udpAddr)
 
 	for {
 		var buffer [512]byte

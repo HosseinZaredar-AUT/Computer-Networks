@@ -8,7 +8,7 @@ import (
 )
 
 // FileRequest ...
-func FileRequest(fileName string, clusterMap map[string]string, myNode *common.Node) {
+func FileRequest(fileName string, clusterMap map[string]string, myNode common.Node) {
 	for _, addr := range clusterMap {
 
 		// TODO check if you already got the file

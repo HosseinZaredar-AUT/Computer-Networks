@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/phayes/freeport"
 )
@@ -76,11 +77,14 @@ func main() {
 	myNode.TCPPort = strconv.Itoa(port)
 	checkError(err)
 
+	// mutex for accessing cluster map
+	var cmMutex sync.Mutex
+
 	// run udp server
-	go udp.Server(clusterMap, myNode, *dir)
+	go udp.Server(clusterMap, myNode, *dir, &cmMutex)
 
 	// run discover client
-	go udp.DiscoverService(clusterMap, myNode)
+	go udp.DiscoverService(clusterMap, myNode, &cmMutex)
 
 	// run TCP server
 	go tcp.Server(myNode, *dir)

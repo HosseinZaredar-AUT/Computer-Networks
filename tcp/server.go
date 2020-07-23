@@ -34,7 +34,6 @@ func handleClient(conn net.Conn, dir string) {
 	checkError(err)
 
 	fileSize := fileInfo.Size()
-	fmt.Println(fileSize)
 
 	// sending file size
 	_, err = conn.Write([]byte(strconv.FormatInt(fileSize, 10)))

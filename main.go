@@ -1,6 +1,7 @@
 package main
 
 import (
+	"P2P-File-Sharing/common"
 	"P2P-File-Sharing/udp"
 	"bufio"
 	"flag"
@@ -20,7 +21,7 @@ func checkError(err error) {
 
 // this function reads the cluster nodes file, updates clusterMap
 // and returns the address of this machine
-func readclusterMap(clusterMap map[string]string, listPath string) string {
+func readClusterNodes(clusterMap map[string]string, listPath string, myNode *common.Node) {
 	f, err := os.Open(listPath)
 	checkError(err)
 
@@ -34,7 +35,8 @@ func readclusterMap(clusterMap map[string]string, listPath string) string {
 	// getting my own address from the first line
 	s.Scan()
 	fields := strings.Fields(s.Text())
-	myAddress := fields[1]
+	myNode.Name = fields[0]
+	myNode.Address = fields[1]
 	clusterMap[fields[0]] = fields[1]
 
 	// getting other nodes
@@ -45,8 +47,6 @@ func readclusterMap(clusterMap map[string]string, listPath string) string {
 
 	err = s.Err()
 	checkError(err)
-
-	return myAddress
 }
 
 func main() {
@@ -58,19 +58,23 @@ func main() {
 
 	// read list of cluster nodes from file
 	clusterMap := make(map[string]string) // a map from name to IP address
-	myAddress := readclusterMap(clusterMap, *listPath)
+
+	var myNode common.Node
+
+	readClusterNodes(clusterMap, *listPath, &myNode)
+	fmt.Println("my node: ", myNode)
 	fmt.Println("initial cluster map:", clusterMap)
 
 	// run udp server
-	go udp.Server(clusterMap, myAddress, *dir)
+	go udp.Server(clusterMap, &myNode, *dir)
 
 	// run discover client
-	go udp.DiscoverService(clusterMap, myAddress)
+	go udp.DiscoverService(clusterMap, &myNode)
 
 	go func() {
 		for {
 			fmt.Println("sent file request!")
-			udp.FileRequest("a.txt", clusterMap, myAddress)
+			udp.FileRequest("a.txt", clusterMap, &myNode)
 			time.Sleep(2 * time.Second)
 		}
 	}()

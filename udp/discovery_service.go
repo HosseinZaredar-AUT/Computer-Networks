@@ -1,6 +1,7 @@
 package udp
 
 import (
+	"P2P-File-Sharing/common"
 	"net"
 	"time"
 )
@@ -20,7 +21,7 @@ func flattenList(clusterMap map[string]string) string {
 }
 
 //DiscoverService ...
-func DiscoverService(clusterMap map[string]string, myAddress string) {
+func DiscoverService(clusterMap map[string]string, myNode *common.Node) {
 	for {
 
 		// turn cluster map into an string
@@ -30,7 +31,7 @@ func DiscoverService(clusterMap map[string]string, myAddress string) {
 		for _, addr := range clusterMap {
 
 			// no sending discovery message to myself
-			if addr == myAddress {
+			if addr == myNode.Address {
 				continue
 			}
 

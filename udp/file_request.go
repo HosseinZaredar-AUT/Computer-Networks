@@ -1,20 +1,21 @@
 package udp
 
 import (
+	"P2P-File-Sharing/common"
 	"fmt"
 	"net"
 	"time"
 )
 
 // FileRequest ...
-func FileRequest(fileName string, clusterMap map[string]string, myAddress string) {
+func FileRequest(fileName string, clusterMap map[string]string, myNode *common.Node) {
 	for _, addr := range clusterMap {
 
 		// TODO check if you already got the file
 		// TODO check if you a different file but with the same name
 
 		// no sending message to myself
-		if addr == myAddress {
+		if addr == myNode.Address {
 			continue
 		}
 

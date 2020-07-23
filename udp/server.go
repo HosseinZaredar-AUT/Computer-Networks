@@ -1,6 +1,7 @@
 package udp
 
 import (
+	"P2P-File-Sharing/common"
 	"fmt"
 	"net"
 	"os"
@@ -25,7 +26,7 @@ func handleDiscovery(message string, clusterMap map[string]string) {
 	// fmt.Println("cluster map:", clusterMap)
 }
 
-func handleFileRequest(fileName string, dir string, myAddress string, conn *net.UDPConn, clientAddr *net.UDPAddr) {
+func handleFileRequest(fileName string, dir string, myNode *common.Node, conn *net.UDPConn, clientAddr *net.UDPAddr) {
 
 	fmt.Println("got a file request!")
 	f, err := os.Open(dir)
@@ -40,16 +41,16 @@ func handleFileRequest(fileName string, dir string, myAddress string, conn *net.
 	for _, file := range files {
 		if !file.IsDir() && file.Name() == fileName[0:len(file.Name())] { //TODO: improve this
 			// send message to client
-			conn.WriteToUDP([]byte(myAddress+": I have '"+fileName+"'"), clientAddr)
+			conn.WriteToUDP([]byte(myNode.Address+": I have '"+fileName+"'"), clientAddr)
 			break
 		}
 	}
 }
 
 //Server ...
-func Server(clusterMap map[string]string, myAddress string, dir string) {
+func Server(clusterMap map[string]string, myNode *common.Node, dir string) {
 
-	udpAddr, err := net.ResolveUDPAddr("udp4", myAddress)
+	udpAddr, err := net.ResolveUDPAddr("udp4", myNode.Address)
 	checkError(err)
 
 	conn, err := net.ListenUDP("udp", udpAddr)
@@ -69,8 +70,7 @@ func Server(clusterMap map[string]string, myAddress string, dir string) {
 		if message[0:4] == "dis:" { // if it's discovery message
 			handleDiscovery(message[4:], clusterMap)
 		} else if message[0:4] == "req:" { // if it's file request message
-			fmt.Println(message)
-			go handleFileRequest(message[4:], dir, myAddress, conn, clientAddr)
+			go handleFileRequest(message[4:], dir, myNode, conn, clientAddr)
 		}
 
 	}

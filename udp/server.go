@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func checkError(err error) {
@@ -28,7 +30,6 @@ func handleDiscovery(message string, clusterMap map[string]string) {
 
 func handleFileRequest(fileName string, dir string, myNode common.Node, conn *net.UDPConn, clientAddr *net.UDPAddr) {
 
-	fmt.Println("got a file request!")
 	f, err := os.Open(dir)
 	checkError(err)
 
@@ -41,7 +42,9 @@ func handleFileRequest(fileName string, dir string, myNode common.Node, conn *ne
 	for _, file := range files {
 		if !file.IsDir() && file.Name() == fileName[0:len(file.Name())] { //TODO: improve this
 			// send message to client
-			conn.WriteToUDP([]byte("I have '"+fileName+"'"), clientAddr)
+			info := myNode.Name + " " + myNode.IP + ":" + myNode.TCPPort
+			t := strconv.FormatInt(time.Now().UnixNano(), 10)
+			conn.WriteToUDP([]byte(t+","+info), clientAddr)
 			break
 		}
 	}

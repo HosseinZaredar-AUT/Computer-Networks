@@ -71,22 +71,26 @@ func main() {
 	// fmt.Println("my node: ", myNode)
 	// fmt.Println("initial cluster map:", clusterMap)
 
+	// find a free TCP port
+	port, err := freeport.GetFreePort()
+	myNode.TCPPort = strconv.Itoa(port)
+	checkError(err)
+
 	// run udp server
 	go udp.Server(clusterMap, myNode, *dir)
 
 	// run discover client
 	go udp.DiscoverService(clusterMap, myNode)
 
-	// find a free TCP port
-	port, err := freeport.GetFreePort()
-	myNode.TCPPort = strconv.Itoa(port)
-	checkError(err)
-
 	// run TCP server
 	go tcp.Server(myNode)
 
 	// run CLI in the main goroutine
-	cli.RunCLI(clusterMap)
+	cli.RunCLI(clusterMap, myNode)
+
+	// n := time.Now()
+	// fmt.Println(n.Unix())
+	// fmt.Println(n.UnixNano())
 
 	// go func() {
 	// 	for {

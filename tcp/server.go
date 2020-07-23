@@ -16,7 +16,12 @@ func checkError(err error) {
 
 func handleClient(conn net.Conn) {
 	defer conn.Close()
-	_, err := conn.Write([]byte("Hello dear client!"))
+
+	var buffer [512]byte
+	conn.Read(buffer[:])
+	fmt.Println("Someone requested for" + string(buffer[:]))
+
+	_, err := conn.Write([]byte("I'll send you that!"))
 	checkError(err)
 }
 

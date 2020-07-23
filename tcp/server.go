@@ -3,9 +3,15 @@ package tcp
 import (
 	"P2P-File-Sharing/common"
 	"fmt"
+	"io"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 )
+
+// BUFFERSIZE buffer size for file transfer
+const BUFFERSIZE = 1024
 
 func checkError(err error) {
 	if err != nil {
@@ -14,19 +20,41 @@ func checkError(err error) {
 	}
 }
 
-func handleClient(conn net.Conn) {
+func handleClient(conn net.Conn, dir string) {
 	defer conn.Close()
 
-	var buffer [512]byte
-	conn.Read(buffer[:])
-	fmt.Println("Someone requested for" + string(buffer[:]))
+	var bufferFileName [64]byte
+	conn.Read(bufferFileName[:])
 
-	_, err := conn.Write([]byte("I'll send you that!"))
+	// oepening the file
+	file, err := os.Open(dir + strings.TrimRight(string(bufferFileName[:]), "\x00"))
 	checkError(err)
+
+	fileInfo, err := file.Stat()
+	checkError(err)
+
+	fileSize := fileInfo.Size()
+	fmt.Println(fileSize)
+
+	// sending file size
+	_, err = conn.Write([]byte(strconv.FormatInt(fileSize, 10)))
+	checkError(err)
+
+	// os.Exit(0)
+
+	// sending the file
+	var sendBuffer [BUFFERSIZE]byte
+	for {
+		_, err = file.Read(sendBuffer[:])
+		if err == io.EOF {
+			break
+		}
+		conn.Write(sendBuffer[:])
+	}
 }
 
 // Server ...
-func Server(myNode common.Node) {
+func Server(myNode common.Node, dir string) {
 
 	service := myNode.IP + ":" + myNode.TCPPort
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", service)
@@ -40,7 +68,7 @@ func Server(myNode common.Node) {
 			continue
 		}
 
-		go handleClient(conn)
+		go handleClient(conn, dir)
 	}
 
 }

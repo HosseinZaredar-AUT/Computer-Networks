@@ -83,20 +83,9 @@ func main() {
 	go udp.DiscoverService(clusterMap, myNode)
 
 	// run TCP server
-	go tcp.Server(myNode)
+	go tcp.Server(myNode, *dir)
 
 	// run CLI in the main goroutine
-	cli.RunCLI(clusterMap, myNode)
+	cli.RunCLI(clusterMap, myNode, *dir)
 
-	// n := time.Now()
-	// fmt.Println(n.Unix())
-	// fmt.Println(n.UnixNano())
-
-	// go func() {
-	// 	for {
-	// 		fmt.Println("sent file request!")
-	// 		udp.FileRequest("a.txt", clusterMap, myNode)
-	// 		time.Sleep(2 * time.Second)
-	// 	}
-	// }()
 }

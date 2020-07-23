@@ -2,6 +2,7 @@ package cli
 
 import (
 	"P2P-File-Sharing/common"
+	"P2P-File-Sharing/tcp"
 	"P2P-File-Sharing/udp"
 	"bufio"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 )
 
 // RunCLI ...
-func RunCLI(clusterMap map[string]string, myNode common.Node) {
+func RunCLI(clusterMap map[string]string, myNode common.Node, dir string) {
 	state := 0
 	reader := bufio.NewReader(os.Stdin)
 
@@ -43,12 +44,16 @@ func RunCLI(clusterMap map[string]string, myNode common.Node) {
 		case 2: // get file
 			fmt.Printf("Please enter file name: ")
 			fileName, _ := reader.ReadString('\n')
+			fileName = strings.TrimRight(fileName, "\n")
 			res := udp.FileRequest(fileName, clusterMap, myNode)
 
 			if res == "!" {
 				fmt.Println("Not found!")
 			} else {
-				fmt.Println(res)
+				fields := strings.Fields(res)
+
+				// getting the file
+				tcp.GetFile(fileName, fields[0], fields[1], dir)
 			}
 
 			state = 0

@@ -2,7 +2,6 @@ package udp
 
 import (
 	"P2P-File-Sharing/common"
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -55,8 +54,6 @@ func FileRequest(fileName string, clusterMap map[string]string, myNode common.No
 
 		go requestNode(fileName, addr, ch)
 
-		// // getting the file
-		// tcp.GetFile(fileName, response[1])
 	}
 
 	// wait for some time
@@ -71,7 +68,7 @@ func FileRequest(fileName string, clusterMap map[string]string, myNode common.No
 	bestDelay = 9223372036854775807 // maximum possible value
 
 	for n := range ch {
-		fmt.Printf("Consumed %s\n", n)
+		// fmt.Printf("Consumed %s\n", n)
 		delay, err := strconv.ParseInt(n[0], 10, 64)
 		checkError(err)
 

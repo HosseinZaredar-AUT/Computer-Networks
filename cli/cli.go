@@ -56,7 +56,7 @@ func RunCLI(clusterMap map[string]string, myNode common.Node, dir string) {
 				fields := strings.Fields(res)
 
 				// getting the file
-				tcp.GetFile(fileName, fields[0], fields[1], dir)
+				tcp.GetFile(fileName, fields[0], fields[1], dir, myNode)
 			}
 
 			state = 0

@@ -7,16 +7,17 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // BUFFERSIZE buffer size for file transfer
 const BUFFERSIZE = 1024
 
-func fillString(retunString string, toLength int) string {
+func fillString(retunString string, toLength int, filler string) string {
 	for {
 		lengtString := len(retunString)
 		if lengtString < toLength {
-			retunString = retunString + ":"
+			retunString = retunString + filler
 			continue
 		}
 		break
@@ -24,18 +25,24 @@ func fillString(retunString string, toLength int) string {
 	return retunString
 }
 
-func handleClient(conn net.Conn, dir string, numServing *int) {
+func handleClient(clusterMap map[string]string, conn net.Conn, dir string, numServing *int, averageNumFiles *float64) {
 	defer func() {
 		conn.Close()
 		(*numServing)--
 	}()
 
-	// getting filename
-	var bufferFileName [64]byte
-	conn.Read(bufferFileName[:])
+	// getting info = filename + the name of requesting node
+	var bufferInfo [100]byte
+	conn.Read(bufferInfo[:])
+
+	info := strings.TrimRight(string(bufferInfo[:]), ":")
+	fields := strings.Split(info, ":")
+
+	fileName := fields[0]
+	nodeName := fields[1]
 
 	// oepening the file
-	file, err := os.Open(dir + strings.TrimRight(string(bufferFileName[:]), ":"))
+	file, err := os.Open(dir + fileName)
 	common.CheckError(err)
 
 	fileInfo, err := file.Stat()
@@ -43,10 +50,25 @@ func handleClient(conn net.Conn, dir string, numServing *int) {
 
 	fileSize := fileInfo.Size()
 	fileSizeStr := strconv.FormatInt(fileSize, 10)
-	fileSizeStr = fillString(fileSizeStr, 64)
+	fileSizeStr = fillString(fileSizeStr, 64, ":")
 
 	// sending file size
-	_, err = conn.Write([]byte(fileSizeStr))
+	_, err = conn.Write([]byte(fillString(fileSizeStr, 64, ":")))
+	common.CheckError(err)
+
+	// checking if the node is speed limited (free-riding node detection)
+	nodeInfo := clusterMap[nodeName]
+	numOfFiles, err := strconv.Atoi(strings.Split(nodeInfo, ";")[1])
+	common.CheckError(err)
+
+	isSpeedLimited := float64(numOfFiles) < *averageNumFiles
+
+	// letting the client know if it is speed limited
+	var limitStr string
+	if limitStr = "0"; isSpeedLimited {
+		limitStr = "1"
+	}
+	_, err = conn.Write([]byte(limitStr))
 	common.CheckError(err)
 
 	// sending the file
@@ -57,11 +79,16 @@ func handleClient(conn net.Conn, dir string, numServing *int) {
 			break
 		}
 		conn.Write(sendBuffer[:])
+
+		// applying speed limit
+		if isSpeedLimited {
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
 }
 
 // Server ...
-func Server(myNode common.Node, dir string, numServing *int) {
+func Server(clusterMap map[string]string, myNode common.Node, dir string, numServing *int, averageNumFiles *float64) {
 
 	service := myNode.IP + ":" + myNode.TCPPort
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", service)
@@ -77,7 +104,7 @@ func Server(myNode common.Node, dir string, numServing *int) {
 
 		// adding 1 to number of clients being served
 		(*numServing)++
-		go handleClient(conn, dir, numServing)
+		go handleClient(clusterMap, conn, dir, numServing, averageNumFiles)
 	}
 
 }

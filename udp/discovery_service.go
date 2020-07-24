@@ -3,11 +3,33 @@ package udp
 import (
 	"P2P-File-Sharing/common"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
+
+func countNumOfFiles(dir string) int {
+	f, err := os.Open(dir)
+	common.CheckError(err)
+
+	files, err := f.Readdir(-1)
+	common.CheckError(err)
+
+	err = f.Close()
+	common.CheckError(err)
+
+	count := 0
+
+	for _, file := range files {
+		if !file.IsDir() {
+			count++
+		}
+	}
+
+	return count
+}
 
 // gets the cluster map as input and returns it as a comma-seperated string of values
 func flattenList(clusterMap map[string]string) string {
@@ -30,7 +52,7 @@ func DiscoverService(clusterMap map[string]string, myNode common.Node, cmMutex *
 		cmMutex.Lock()
 
 		// updating numOfFiles
-		numOfFiles := common.CountNumOfFiles(dir)
+		numOfFiles := countNumOfFiles(dir)
 		clusterMap[myNode.Name] = myNode.IP + ":" + myNode.UDPPPort + ";" + strconv.Itoa(numOfFiles)
 
 		// getting a copy from cluster map

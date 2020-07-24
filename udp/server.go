@@ -10,9 +10,10 @@ import (
 	"time"
 )
 
+// MAXSERVING ...
 const MAXSERVING = 1
 
-func handleDiscovery(message string, clusterMap map[string]string, cmMutex *sync.Mutex) {
+func handleDiscovery(message string, clusterMap map[string]string, cmMutex *sync.Mutex, averageNumFiles *float64) {
 	// updating cluster map
 	nodes := strings.Split(strings.TrimRight(message, "\x00"), ",")
 	cmMutex.Lock()
@@ -21,6 +22,18 @@ func handleDiscovery(message string, clusterMap map[string]string, cmMutex *sync
 		clusterMap[fields[0]] = fields[1]
 	}
 	cmMutex.Unlock()
+
+	// updating average number of files being served by peers
+	sum := 0
+	numOfNodes := 0
+	for _, info := range clusterMap {
+		num, err := strconv.Atoi(strings.Split(info, ";")[1])
+		common.CheckError(err)
+		sum += num
+		numOfNodes++
+	}
+
+	*averageNumFiles = float64(sum) / float64(numOfNodes)
 }
 
 func handleFileRequest(fileName string, dir string, myNode common.Node, conn *net.UDPConn, clientAddr *net.UDPAddr, numServing *int) {
@@ -52,7 +65,7 @@ func handleFileRequest(fileName string, dir string, myNode common.Node, conn *ne
 }
 
 //Server ...
-func Server(clusterMap map[string]string, myNode common.Node, dir string, cmMutex *sync.Mutex, numServing *int) {
+func Server(clusterMap map[string]string, myNode common.Node, dir string, cmMutex *sync.Mutex, numServing *int, averageNumFiles *float64) {
 
 	service := myNode.IP + ":" + myNode.UDPPPort
 	udpAddr, err := net.ResolveUDPAddr("udp4", service)
@@ -71,7 +84,7 @@ func Server(clusterMap map[string]string, myNode common.Node, dir string, cmMute
 		message := string(buffer[:])
 
 		if message[0:4] == "dis:" { // if it's discovery message
-			handleDiscovery(message[4:], clusterMap, cmMutex)
+			handleDiscovery(message[4:], clusterMap, cmMutex, averageNumFiles)
 		} else if message[0:4] == "req:" { // if it's file request message
 			go handleFileRequest(message[4:], dir, myNode, conn, clientAddr, numServing)
 		}

@@ -76,14 +76,17 @@ func main() {
 	// (TCP and UDP servers will have acess to this variable)
 	numServing := 0
 
+	// average number of files being served by peers
+	averageNumFiles := 0.0
+
 	// run udp server (responsibe fot getting discovery messages and file requests)
-	go udp.Server(clusterMap, myNode, *dir, &cmMutex, &numServing)
+	go udp.Server(clusterMap, myNode, *dir, &cmMutex, &numServing, &averageNumFiles)
 
 	// run discover service (responsible for sending discovery messages)
 	go udp.DiscoverService(clusterMap, myNode, &cmMutex, *dir)
 
 	// run TCP server (responsible for getting file name and transfering the file)
-	go tcp.Server(myNode, *dir, &numServing)
+	go tcp.Server(clusterMap, myNode, *dir, &numServing, &averageNumFiles)
 
 	// run CLI in the main goroutine
 	cli.RunCLI(clusterMap, myNode, *dir)

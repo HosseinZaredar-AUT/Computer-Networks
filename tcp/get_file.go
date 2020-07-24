@@ -13,15 +13,15 @@ import (
 )
 
 // GetFile ...
-func GetFile(fileName string, name string, addr string, dir string) {
+func GetFile(fileName string, serverName string, addr string, dir string, myNode common.Node) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", addr)
 	common.CheckError(err)
 
 	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	common.CheckError(err)
 
-	// sending file name
-	fileNameFilled := fillString(fileName, 64)
+	// sending file name + myNode.name
+	fileNameFilled := fillString(fileName+":"+myNode.Name, 100, ":")
 	conn.Write([]byte(fileNameFilled))
 
 	// getting file size
@@ -31,7 +31,15 @@ func GetFile(fileName string, name string, addr string, dir string) {
 	fileSize, err := strconv.ParseInt(strings.TrimRight(string(bufferFileSize[:]), ":"), 10, 64)
 	common.CheckError(err)
 
-	fmt.Printf("Getting '%s' (%s) from '%s (%s)'...\n", fileName, humanize.Bytes(uint64(fileSize)), name, addr)
+	fmt.Printf("Getting '%s' (%s) from '%s (%s)'...\n", fileName, humanize.Bytes(uint64(fileSize)), serverName, addr)
+
+	// checking if we are speed limited
+	var bufferSpeedLimited [1]byte
+	conn.Read(bufferSpeedLimited[:])
+
+	if string(bufferSpeedLimited[:]) == "1" {
+		fmt.Println("Your download speed is limited to 10kB/s (because you share less files than average!)")
+	}
 
 	// creating the file
 	newFile, err := os.Create(dir + fileName)

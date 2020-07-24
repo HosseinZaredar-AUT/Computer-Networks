@@ -2,7 +2,6 @@ package udp
 
 import (
 	"P2P-File-Sharing/common"
-	"fmt"
 	"net"
 	"os"
 	"strconv"
@@ -10,13 +9,6 @@ import (
 	"sync"
 	"time"
 )
-
-func checkError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
-	}
-}
 
 func handleDiscovery(message string, clusterMap map[string]string, cmMutex *sync.Mutex) {
 	// updating cluster map
@@ -32,13 +24,13 @@ func handleDiscovery(message string, clusterMap map[string]string, cmMutex *sync
 func handleFileRequest(fileName string, dir string, myNode common.Node, conn *net.UDPConn, clientAddr *net.UDPAddr) {
 
 	f, err := os.Open(dir)
-	checkError(err)
+	common.CheckError(err)
 
 	files, err := f.Readdir(-1)
-	checkError(err)
+	common.CheckError(err)
 
 	err = f.Close()
-	checkError(err)
+	common.CheckError(err)
 
 	for _, file := range files {
 		if !file.IsDir() && file.Name() == fileName[0:len(file.Name())] { //TODO: improve this
@@ -56,10 +48,10 @@ func Server(clusterMap map[string]string, myNode common.Node, dir string, cmMute
 
 	service := myNode.IP + ":" + myNode.UDPPPort
 	udpAddr, err := net.ResolveUDPAddr("udp4", service)
-	checkError(err)
+	common.CheckError(err)
 
 	conn, err := net.ListenUDP("udp", udpAddr)
-	checkError(err)
+	common.CheckError(err)
 
 	for {
 		var buffer [512]byte

@@ -45,13 +45,13 @@ func DiscoverService(clusterMap map[string]string, myNode common.Node, cmMutex *
 			}
 
 			udpAddr, err := net.ResolveUDPAddr("udp4", addr)
-			checkError(err)
+			common.CheckError(err)
 
 			conn, err := net.DialUDP("udp", nil, udpAddr)
-			checkError(err)
+			common.CheckError(err)
 
 			_, err = conn.Write([]byte("dis:" + flatList))
-			checkError(err)
+			common.CheckError(err)
 
 			// fmt.Println("Sent the cluster list")
 		}

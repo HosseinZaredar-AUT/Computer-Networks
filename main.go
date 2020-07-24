@@ -7,7 +7,6 @@ import (
 	"P2P-File-Sharing/udp"
 	"bufio"
 	"flag"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -16,22 +15,15 @@ import (
 	"github.com/phayes/freeport"
 )
 
-func checkError(err error) {
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-}
-
 // this function reads the cluster nodes file, updates clusterMap
 // and returns the address of this machine
 func readClusterNodes(clusterMap map[string]string, listPath string, myNode *common.Node) {
 	f, err := os.Open(listPath)
-	checkError(err)
+	common.CheckError(err)
 
 	defer func() {
 		err := f.Close()
-		checkError(err)
+		common.CheckError(err)
 	}()
 
 	s := bufio.NewScanner(f)
@@ -53,7 +45,7 @@ func readClusterNodes(clusterMap map[string]string, listPath string, myNode *com
 	}
 
 	err = s.Err()
-	checkError(err)
+	common.CheckError(err)
 }
 
 func main() {
@@ -63,19 +55,20 @@ func main() {
 	dir := flag.String("d", "", "directory path")
 	flag.Parse()
 
+	// adding '/' ('\') at the end of dir, if it doesn't have that
+	if !strings.HasSuffix(*dir, string(os.PathSeparator)) {
+		*dir = *dir + string(os.PathSeparator)
+	}
+
 	// read list of cluster nodes from file
-	clusterMap := make(map[string]string) // a map from name to IP address
-
+	clusterMap := make(map[string]string) // a map from name to IP:Port
 	var myNode common.Node
-
 	readClusterNodes(clusterMap, *listPath, &myNode)
-	// fmt.Println("my node: ", myNode)
-	// fmt.Println("initial cluster map:", clusterMap)
 
 	// find a free TCP port
 	port, err := freeport.GetFreePort()
 	myNode.TCPPort = strconv.Itoa(port)
-	checkError(err)
+	common.CheckError(err)
 
 	// mutex for accessing cluster map
 	var cmMutex sync.Mutex

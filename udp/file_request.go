@@ -10,13 +10,13 @@ import (
 
 func requestNode(fileName string, nodeAddress string, ch chan [2]string) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", nodeAddress)
-	checkError(err)
+	common.CheckError(err)
 
 	conn, err := net.DialUDP("udp", nil, udpAddr)
-	checkError(err)
+	common.CheckError(err)
 
 	_, err = conn.Write([]byte("req:" + fileName))
-	checkError(err)
+	common.CheckError(err)
 
 	// waiting for response
 
@@ -28,7 +28,7 @@ func requestNode(fileName string, nodeAddress string, ch chan [2]string) {
 	if l != 0 { // if we got any response
 		response := strings.Split(string(buffer[:]), ",")
 		sendTime, err := strconv.ParseInt(response[0], 10, 64)
-		checkError(err)
+		common.CheckError(err)
 
 		delay := time.Now().UnixNano() - sendTime
 
@@ -70,7 +70,7 @@ func FileRequest(fileName string, clusterMap map[string]string, myNode common.No
 	for n := range ch {
 		// fmt.Printf("Consumed %s\n", n)
 		delay, err := strconv.ParseInt(n[0], 10, 64)
-		checkError(err)
+		common.CheckError(err)
 
 		if delay < bestDelay {
 			bestDelay = delay

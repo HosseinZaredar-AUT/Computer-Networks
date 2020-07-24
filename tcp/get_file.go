@@ -1,40 +1,41 @@
 package tcp
 
 import (
+	"P2P-File-Sharing/common"
 	"fmt"
 	"io"
 	"net"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/dustin/go-humanize"
 )
 
 // GetFile ...
 func GetFile(fileName string, name string, addr string, dir string) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", addr)
-	checkError(err)
+	common.CheckError(err)
 
 	conn, err := net.DialTCP("tcp", nil, tcpAddr)
-	checkError(err)
+	common.CheckError(err)
 
 	// sending file name
-	conn.Write([]byte(fileName))
+	fileNameFilled := fillString(fileName, 64)
+	conn.Write([]byte(fileNameFilled))
 
 	// getting file size
-	var bufferFileSize [10]byte
+	var bufferFileSize [64]byte
 	conn.Read(bufferFileSize[:])
 
-	fmt.Println(bufferFileSize[:])
-	fileSize, err := strconv.ParseInt(strings.TrimRight(string(bufferFileSize[:]), "\x00"), 10, 64)
-	checkError(err)
+	fileSize, err := strconv.ParseInt(strings.TrimRight(string(bufferFileSize[:]), ":"), 10, 64)
+	common.CheckError(err)
 
-	fmt.Printf("Getting '%s' (%d Bytes) from '%s (%s)'...\n", fileName, fileSize, name, addr)
-
-	// os.Exit(0)
+	fmt.Printf("Getting '%s' (%s) from '%s (%s)'...\n", fileName, humanize.Bytes(uint64(fileSize)), name, addr)
 
 	// creating the file
 	newFile, err := os.Create(dir + fileName)
-	checkError(err)
+	common.CheckError(err)
 
 	defer newFile.Close()
 

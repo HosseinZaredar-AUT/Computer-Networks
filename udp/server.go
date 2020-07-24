@@ -10,9 +10,11 @@ import (
 	"time"
 )
 
+const MAXSERVING = 1
+
 func handleDiscovery(message string, clusterMap map[string]string, cmMutex *sync.Mutex) {
 	// updating cluster map
-	nodes := strings.Split(message, ",")
+	nodes := strings.Split(strings.TrimRight(message, "\x00"), ",")
 	cmMutex.Lock()
 	for _, node := range nodes {
 		fields := strings.Fields(node)
@@ -21,7 +23,7 @@ func handleDiscovery(message string, clusterMap map[string]string, cmMutex *sync
 	cmMutex.Unlock()
 }
 
-func handleFileRequest(fileName string, dir string, myNode common.Node, conn *net.UDPConn, clientAddr *net.UDPAddr) {
+func handleFileRequest(fileName string, dir string, myNode common.Node, conn *net.UDPConn, clientAddr *net.UDPAddr, numServing *int) {
 
 	f, err := os.Open(dir)
 	common.CheckError(err)
@@ -34,17 +36,23 @@ func handleFileRequest(fileName string, dir string, myNode common.Node, conn *ne
 
 	for _, file := range files {
 		if !file.IsDir() && file.Name() == fileName[0:len(file.Name())] { //TODO: improve this
-			// send message to client
-			info := myNode.Name + " " + myNode.IP + ":" + myNode.TCPPort
-			t := strconv.FormatInt(time.Now().UnixNano(), 10)
-			conn.WriteToUDP([]byte(t+","+info), clientAddr)
+
+			// check if we are serving maximum number of clients
+			if *numServing >= MAXSERVING {
+				conn.WriteToUDP([]byte("busy, "+myNode.Name), clientAddr)
+			} else { // if the node is ready to serve
+				info := myNode.Name + " " + myNode.IP + ":" + myNode.TCPPort
+				t := strconv.FormatInt(time.Now().UnixNano(), 10)
+				conn.WriteToUDP([]byte(t+","+info), clientAddr)
+			}
+
 			break
 		}
 	}
 }
 
 //Server ...
-func Server(clusterMap map[string]string, myNode common.Node, dir string, cmMutex *sync.Mutex) {
+func Server(clusterMap map[string]string, myNode common.Node, dir string, cmMutex *sync.Mutex, numServing *int) {
 
 	service := myNode.IP + ":" + myNode.UDPPPort
 	udpAddr, err := net.ResolveUDPAddr("udp4", service)
@@ -65,7 +73,7 @@ func Server(clusterMap map[string]string, myNode common.Node, dir string, cmMute
 		if message[0:4] == "dis:" { // if it's discovery message
 			handleDiscovery(message[4:], clusterMap, cmMutex)
 		} else if message[0:4] == "req:" { // if it's file request message
-			go handleFileRequest(message[4:], dir, myNode, conn, clientAddr)
+			go handleFileRequest(message[4:], dir, myNode, conn, clientAddr, numServing)
 		}
 
 	}

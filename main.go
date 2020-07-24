@@ -31,12 +31,11 @@ func readClusterNodes(clusterMap map[string]string, listPath string, myNode *com
 	// getting my own node information from the first line
 	s.Scan()
 	fields := strings.Fields(s.Text())
+	clusterMap[fields[0]] = fields[1]
 	myNode.Name = fields[0]
 	address := strings.Split(fields[1], ":")
 	myNode.IP = address[0]
 	myNode.UDPPPort = address[1]
-
-	clusterMap[fields[0]] = fields[1]
 
 	// getting other nodes
 	for s.Scan() {
@@ -73,14 +72,18 @@ func main() {
 	// mutex for accessing cluster map
 	var cmMutex sync.Mutex
 
-	// run udp server
-	go udp.Server(clusterMap, myNode, *dir, &cmMutex)
+	// number of clients being served, which is the number of clients that are getting a file from TCP server
+	// (TCP and UDP servers will have acess to this variable)
+	numServing := 0
 
-	// run discover client
+	// run udp server (responsibe fot getting discovery messages and file requests)
+	go udp.Server(clusterMap, myNode, *dir, &cmMutex, &numServing)
+
+	// run discover service (responsible for sending discovery messages)
 	go udp.DiscoverService(clusterMap, myNode, &cmMutex)
 
-	// run TCP server
-	go tcp.Server(myNode, *dir)
+	// run TCP server (responsible for getting file name and transfering the file)
+	go tcp.Server(myNode, *dir, &numServing)
 
 	// run CLI in the main goroutine
 	cli.RunCLI(clusterMap, myNode, *dir)

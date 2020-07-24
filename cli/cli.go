@@ -47,8 +47,11 @@ func RunCLI(clusterMap map[string]string, myNode common.Node, dir string) {
 			fileName = strings.TrimRight(fileName, "\n")
 			res := udp.FileRequest(fileName, clusterMap, myNode)
 
-			if res == "!" {
+			if res == "not found" {
 				fmt.Println("Not found!")
+			} else if res == "busy" {
+				fmt.Println("The file was found, but the node(s) are busy at the moment.")
+				fmt.Println("Please try again later.")
 			} else {
 				fields := strings.Fields(res)
 

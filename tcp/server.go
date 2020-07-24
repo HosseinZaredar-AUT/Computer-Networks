@@ -24,8 +24,11 @@ func fillString(retunString string, toLength int) string {
 	return retunString
 }
 
-func handleClient(conn net.Conn, dir string) {
-	defer conn.Close()
+func handleClient(conn net.Conn, dir string, numServing *int) {
+	defer func() {
+		conn.Close()
+		(*numServing)--
+	}()
 
 	// getting filename
 	var bufferFileName [64]byte
@@ -58,7 +61,7 @@ func handleClient(conn net.Conn, dir string) {
 }
 
 // Server ...
-func Server(myNode common.Node, dir string) {
+func Server(myNode common.Node, dir string, numServing *int) {
 
 	service := myNode.IP + ":" + myNode.TCPPort
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", service)
@@ -72,7 +75,9 @@ func Server(myNode common.Node, dir string) {
 			continue
 		}
 
-		go handleClient(conn, dir)
+		// adding 1 to number of clients being served
+		(*numServing)++
+		go handleClient(conn, dir, numServing)
 	}
 
 }

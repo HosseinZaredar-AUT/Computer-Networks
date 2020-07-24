@@ -17,7 +17,7 @@ import (
 
 // this function reads the cluster nodes file, updates clusterMap
 // and returns the address of this machine
-func readClusterNodes(clusterMap map[string]string, listPath string, myNode *common.Node) {
+func readClusterNodes(clusterMap map[string]string, listPath string, myNode *common.Node, dir string) {
 	f, err := os.Open(listPath)
 	common.CheckError(err)
 
@@ -31,7 +31,7 @@ func readClusterNodes(clusterMap map[string]string, listPath string, myNode *com
 	// getting my own node information from the first line
 	s.Scan()
 	fields := strings.Fields(s.Text())
-	clusterMap[fields[0]] = fields[1]
+	clusterMap[fields[0]] = fields[1] + ";" + "0"
 	myNode.Name = fields[0]
 	address := strings.Split(fields[1], ":")
 	myNode.IP = address[0]
@@ -40,7 +40,7 @@ func readClusterNodes(clusterMap map[string]string, listPath string, myNode *com
 	// getting other nodes
 	for s.Scan() {
 		fields := strings.Fields(s.Text())
-		clusterMap[fields[0]] = fields[1]
+		clusterMap[fields[0]] = fields[1] + ";" + "0"
 	}
 
 	err = s.Err()
@@ -60,9 +60,9 @@ func main() {
 	}
 
 	// read list of cluster nodes from file
-	clusterMap := make(map[string]string) // a map from name to IP:Port
+	clusterMap := make(map[string]string) // a map from name to (IP:Port,numOfFilesShared)
 	var myNode common.Node
-	readClusterNodes(clusterMap, *listPath, &myNode)
+	readClusterNodes(clusterMap, *listPath, &myNode, *dir)
 
 	// find a free TCP port
 	port, err := freeport.GetFreePort()
@@ -80,7 +80,7 @@ func main() {
 	go udp.Server(clusterMap, myNode, *dir, &cmMutex, &numServing)
 
 	// run discover service (responsible for sending discovery messages)
-	go udp.DiscoverService(clusterMap, myNode, &cmMutex)
+	go udp.DiscoverService(clusterMap, myNode, &cmMutex, *dir)
 
 	// run TCP server (responsible for getting file name and transfering the file)
 	go tcp.Server(myNode, *dir, &numServing)

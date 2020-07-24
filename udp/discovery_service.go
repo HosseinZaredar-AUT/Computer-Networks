@@ -3,6 +3,8 @@ package udp
 import (
 	"P2P-File-Sharing/common"
 	"net"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -22,10 +24,15 @@ func flattenList(clusterMap map[string]string) string {
 }
 
 //DiscoverService ...
-func DiscoverService(clusterMap map[string]string, myNode common.Node, cmMutex *sync.Mutex) {
+func DiscoverService(clusterMap map[string]string, myNode common.Node, cmMutex *sync.Mutex, dir string) {
 	for {
 
 		cmMutex.Lock()
+
+		// updating numOfFiles
+		numOfFiles := common.CountNumOfFiles(dir)
+		clusterMap[myNode.Name] = myNode.IP + ":" + myNode.UDPPPort + ";" + strconv.Itoa(numOfFiles)
+
 		// getting a copy from cluster map
 		clusterMapCopy := make(map[string]string)
 		for key, value := range clusterMap {
@@ -37,8 +44,9 @@ func DiscoverService(clusterMap map[string]string, myNode common.Node, cmMutex *
 		flatList := flattenList(clusterMapCopy)
 
 		// for each node in cluster map
-		for _, addr := range clusterMapCopy {
+		for _, info := range clusterMapCopy {
 
+			addr := strings.Split(info, ";")[0]
 			// no sending discovery message to myself
 			if addr == (myNode.IP + ":" + myNode.UDPPPort) {
 				continue

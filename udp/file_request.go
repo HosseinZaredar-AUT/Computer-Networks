@@ -50,8 +50,9 @@ func FileRequest(fileName string, clusterMap map[string]string, myNode common.No
 	// shared channel
 	ch := make(chan [2]string, 10)
 
-	for _, addr := range clusterMap {
+	for _, info := range clusterMap {
 
+		addr := strings.Split(info, ";")[0]
 		// no sending message to myself
 		if addr == (myNode.IP + ":" + myNode.UDPPPort) {
 			continue

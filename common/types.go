@@ -1,6 +1,6 @@
 package common
 
-// Node ...
+// Node a struct for storing user's own machine information
 type Node struct {
 	Name     string
 	IP       string

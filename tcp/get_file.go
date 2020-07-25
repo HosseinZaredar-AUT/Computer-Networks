@@ -12,15 +12,18 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-// GetFile ...
-func GetFile(fileName string, serverName string, addr string, dir string, myNode common.Node) {
+// GetFile sends a transmit request to a peer
+func GetFile(fileName string, serverName string, addr string, dir string, myNode common.Node, averageNumFiles *float64) {
+
+	// creating proper address
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", addr)
 	common.CheckError(err)
 
+	// getting connected to server
 	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	common.CheckError(err)
 
-	// sending file name + myNode.name
+	// sending "filename:myNode.name"
 	fileNameFilled := fillString(fileName+":"+myNode.Name, 100, ":")
 	conn.Write([]byte(fileNameFilled))
 
@@ -38,26 +41,36 @@ func GetFile(fileName string, serverName string, addr string, dir string, myNode
 	conn.Read(bufferSpeedLimited[:])
 
 	if string(bufferSpeedLimited[:]) == "1" {
-		fmt.Println("Your download speed is limited to 10kB/s (because you share less files than average!)")
+		fmt.Println("Your download speed is limited to 100kB/s (due to sharing less files than the average (=", *averageNumFiles, ")")
 	}
 
-	// creating the file
-	newFile, err := os.Create(dir + fileName)
+	// creating an empty file named "temp"
+	newFile, err := os.Create(dir + "temp")
 	common.CheckError(err)
-
-	defer newFile.Close()
 
 	// getting the file in chunks
 	var receivedBytes int64
 
+	// until we received all of the file
 	for {
+
+		// if the remaining chuck of file is smaller than buffer size
 		if (fileSize - receivedBytes) < BUFFERSIZE {
 			io.CopyN(newFile, conn, (fileSize - receivedBytes))
 			conn.Read(make([]byte, (receivedBytes+BUFFERSIZE)-fileSize))
 			break
 		}
+
+		// if the remaining chuck of file is equal to or more than buffer size
 		io.CopyN(newFile, conn, BUFFERSIZE)
 		receivedBytes += BUFFERSIZE
 	}
+
+	// closing the file
+	newFile.Close()
+
+	// renaming the file to the real name
+	os.Rename(dir+"temp", dir+fileName)
+
 	fmt.Println("File received!")
 }

@@ -1,0 +1,4 @@
+$your_username$ $your_global_ip$ $your_local_ip$ $udp_port$ $tcp_port$
+$username1$ $global_ip1$:$udp_port1$
+$username2$ $global_ip2$:$udp_port2$
+$username3$ $global_ip3$:$udp_port3$

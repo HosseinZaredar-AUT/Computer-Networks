@@ -59,10 +59,6 @@ func DiscoverService(clusterMap map[string]string, myNode common.Node, cmMutex *
 
 		cmMutex.Lock() // lock cluster map
 
-		// updating numOfFiles (= the number of files we're serving)
-		numOfFiles := countNumOfFiles(dir)
-		clusterMap[myNode.Name] = myNode.IP + ":" + myNode.UDPPPort + ";" + strconv.Itoa(numOfFiles)
-
 		// getting a copy from cluster map
 		clusterMapCopy := make(map[string]string)
 		for key, value := range clusterMap {
@@ -70,6 +66,10 @@ func DiscoverService(clusterMap map[string]string, myNode common.Node, cmMutex *
 		}
 
 		cmMutex.Unlock() // unlock cluster map
+
+		// adding myself to the list
+		numOfFiles := countNumOfFiles(dir)
+		clusterMapCopy[myNode.Name] = myNode.GlobalIP + ":" + myNode.UDPPPort + ";" + strconv.Itoa(numOfFiles)
 
 		// turn cluster map into an string
 		flatList := flattenList(clusterMapCopy)
@@ -81,7 +81,7 @@ func DiscoverService(clusterMap map[string]string, myNode common.Node, cmMutex *
 			addr := strings.Split(info, ";")[0]
 
 			// not sending discovery message to myself
-			if addr == (myNode.IP + ":" + myNode.UDPPPort) {
+			if addr == (myNode.GlobalIP + ":" + myNode.UDPPPort) {
 				continue
 			}
 

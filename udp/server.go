@@ -65,7 +65,7 @@ func handleFileRequest(fileName string, dir string, myNode common.Node, conn *ne
 
 			} else { // if the node is ready to serve
 				// telling the clients that we're ready to send the file
-				info := myNode.Name + " " + myNode.IP + ":" + myNode.TCPPort
+				info := myNode.Name + " " + myNode.GlobalIP + ":" + myNode.TCPPort
 				t := strconv.FormatInt(time.Now().UnixNano(), 10) // the time that we are sending this message
 				conn.WriteToUDP([]byte(t+","+info), clientAddr)
 			}
@@ -81,7 +81,7 @@ func handleFileRequest(fileName string, dir string, myNode common.Node, conn *ne
 func Server(clusterMap map[string]string, myNode common.Node, dir string, cmMutex *sync.Mutex, numServing *int, averageNumFiles *float64, maxClients int) {
 
 	// creating proper address
-	service := myNode.IP + ":" + myNode.UDPPPort
+	service := myNode.LocalIP + ":" + myNode.UDPPPort
 	udpAddr, err := net.ResolveUDPAddr("udp4", service)
 	common.CheckError(err)
 

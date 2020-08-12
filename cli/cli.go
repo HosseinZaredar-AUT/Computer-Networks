@@ -68,7 +68,9 @@ func RunCLI(clusterMap map[string]string, myNode common.Node, dir string, averag
 
 		case 3: // status
 			fmt.Println("Status:")
-			fmt.Printf("Name (IP): %s (%s)\n", myNode.Name, myNode.IP)
+			fmt.Printf("Name: %s\n", myNode.Name)
+			fmt.Printf("Global IP: %s\n", myNode.GlobalIP)
+			fmt.Printf("Local IP: %s\n", myNode.LocalIP)
 			fmt.Printf("UDP server running on port '%s'\n", myNode.UDPPPort)
 			fmt.Printf("TCP server running on port '%s'\n", myNode.TCPPort)
 			state = 0

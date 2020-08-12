@@ -106,7 +106,7 @@ func handleClient(clusterMap map[string]string, conn net.Conn, dir string, numSe
 func Server(clusterMap map[string]string, myNode common.Node, dir string, numServing *int, averageNumFiles *float64) {
 
 	// creating proper address
-	service := myNode.IP + ":" + myNode.TCPPort
+	service := myNode.LocalIP + ":" + myNode.TCPPort
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", service)
 	common.CheckError(err)
 

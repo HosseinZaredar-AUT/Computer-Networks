@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/phayes/freeport"
 )
 
 // this function reads the cluster nodes file, fills clusterMap and user's own node info
@@ -34,13 +32,15 @@ func readClusterNodes(clusterMap map[string]string, listPath string, myNode *com
 	// getting my own node information from the first line
 	s.Scan()
 	fields := strings.Fields(s.Text())
-	clusterMap[fields[0]] = fields[1] + ";" + "0"
 
 	// updating myNode struct
 	myNode.Name = fields[0]
-	address := strings.Split(fields[1], ":")
-	myNode.IP = address[0]
-	myNode.UDPPPort = address[1]
+	myNode.GlobalIP = fields[1]
+	myNode.LocalIP = fields[2]
+	myNode.UDPPPort = fields[3]
+	myNode.TCPPort = fields[4]
+
+	clusterMap[fields[0]] = fields[1] + ":" + fields[3] + ";" + "0"
 
 	// getting other nodes
 	for s.Scan() {
@@ -86,11 +86,6 @@ func main() {
 	var myNode common.Node
 
 	readClusterNodes(clusterMap, *listPath, &myNode, *dir)
-
-	// find a free TCP port
-	port, err := freeport.GetFreePort()
-	myNode.TCPPort = strconv.Itoa(port)
-	common.CheckError(err)
 
 	// mutex for accessing cluster map
 	// (in udp.server.go for updating it, in discovery_service.go for reading it)

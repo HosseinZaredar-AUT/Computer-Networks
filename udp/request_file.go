@@ -69,7 +69,7 @@ func FileRequest(fileName string, clusterMap map[string]string, myNode common.No
 		addr := strings.Split(info, ";")[0]
 
 		// not sending message to myself
-		if addr == (myNode.IP + ":" + myNode.UDPPPort) {
+		if addr == (myNode.GlobalIP + ":" + myNode.UDPPPort) {
 			continue
 		}
 

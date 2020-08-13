@@ -13,9 +13,9 @@ import (
 // RunCLI a command-line user inteface
 func RunCLI(clusterMap map[string]string, myNode common.Node, dir string, averageNumFiles *float64, timeOut int) {
 	state := 0
-	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println("Welcome to Netwolf P2P File Sharing System!")
+	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
 		switch state {
@@ -27,8 +27,8 @@ func RunCLI(clusterMap map[string]string, myNode common.Node, dir string, averag
 			fmt.Println("4. See your files")
 			fmt.Printf("Please choose a command: ")
 
-			command, _ := reader.ReadString('\n')
-			command = strings.TrimRight(command, "\n")
+			scanner.Scan()
+			command := strings.TrimRight(scanner.Text(), "\n")
 			if command == "1" {
 				state = 1
 			} else if command == "2" {
@@ -41,8 +41,8 @@ func RunCLI(clusterMap map[string]string, myNode common.Node, dir string, averag
 
 		case 1: // get file
 			fmt.Printf("Please enter file name: ")
-			fileName, _ := reader.ReadString('\n')
-			fileName = strings.TrimRight(fileName, "\n")
+			scanner.Scan()
+			fileName := strings.TrimRight(scanner.Text(), "\n")
 
 			// requesting for the file
 			res := udp.FileRequest(fileName, clusterMap, myNode, timeOut)

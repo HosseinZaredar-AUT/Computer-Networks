@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/dustin/go-humanize"
 )
 
@@ -41,7 +42,7 @@ func GetFile(fileName string, serverName string, addr string, dir string, myNode
 	conn.Read(bufferSpeedLimited[:])
 
 	if string(bufferSpeedLimited[:]) == "1" {
-		fmt.Println("Your download speed is limited to 100kB/s (due to sharing less files than the average (=", *averageNumFiles, ")")
+		fmt.Println("Your download speed is limited (due to sharing less files than the average (=", *averageNumFiles, ")")
 	}
 
 	// creating an empty file named "temp"
@@ -50,6 +51,9 @@ func GetFile(fileName string, serverName string, addr string, dir string, myNode
 
 	// getting the file in chunks
 	var receivedBytes int64
+
+	bar := pb.Full.Start64(fileSize)
+	bar.Set(pb.Bytes, true)
 
 	// until we received all of the file
 	for {
@@ -64,7 +68,10 @@ func GetFile(fileName string, serverName string, addr string, dir string, myNode
 		// if the remaining chuck of file is equal to or more than buffer size
 		io.CopyN(newFile, conn, BUFFERSIZE)
 		receivedBytes += BUFFERSIZE
+		bar.Add(BUFFERSIZE)
 	}
+
+	bar.Finish()
 
 	// closing the file
 	newFile.Close()
